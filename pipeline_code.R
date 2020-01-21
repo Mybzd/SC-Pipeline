@@ -1,19 +1,21 @@
 #load packages
 library("ggplot2")
-library("DropletUtils") x
-library("edgeR") x
+library("DropletUtils") 
+library("edgeR") 
 library("dplyr")
-library("Seurat") x
+library("Seurat") 
 library("DoubletFinder")
 library("sctransform")
 library("data.table")
-library("conos") x
-library("pagoda2") x
-library("MAST") x
+library("conos") 
+library("pagoda2") 
+library("MAST") 
 library("graphics")
 
 #load in source file with functions
 source("/mnt/data/Maya/SHvsPH/Analysis/SHvsPH/single_cell_function.R")
+
+#set working directory for plots to be saved
 setwd("/mnt/data/Maya/SHvsPH/Analysis/SHvsPH/")
 
 #define samples
@@ -904,97 +906,3 @@ fcHurdleSig2$primerid=NULL
 saveRDS(fcHurdle,"FCHURDLE.SH_PH_Unclassified.rds")
 write.csv(fcHurdle,"FCHURDLE_SH_PH_Unclassified.csv")
 write.csv(fcHurdleSig2,"Sig_Genes_SH_PH_Unclassified.csv")
-
-
-
-
-
-
-#expression per gene
-
-#INTERNEURONES
-sca = FromMatrix(log2(as.matrix(Table.MX.cpm3.INT)+1),Ex.MetaData,fdata)
-
-Table.SH.cpm3.INT.SH=subset(assay(sca), select=grepl("SH_", colnames(assay(sca))))
-Table.PH.cpm3.INT.PH=subset(assay(sca), select=grepl("PH_", colnames(assay(sca))))
-
- 
-expressionPerGene.INT.SH=rowSums(Table.SH.cpm3.INT.SH)
-expressionPerGene.INT.PH=rowSums(Table.PH.cpm3.INT.PH)
-
-expressionPerGene.sort.INT.SH=sort(expressionPerGene.INT.SH, decreasing=T)
-expressionPerGene.sort.INT.PH=sort(expressionPerGene.INT.PH, decreasing=T)
-
-
-expressionPerGene.INT.names.SH=names(expressionPerGene.sort.INT.SH)[1:2002]
-expressionPerGene.INT.names.PH=names(expressionPerGene.sort.INT.PH)[1:2002]
-
-A=intersect(M30GeneList$V1,expressionPerGene.INT.names.SH)
-B=intersect(M30GeneList$V1,expressionPerGene.INT.names.PH)
-length(A)
-length(B)
-
-FET.data = matrix(c(99,219,100,218), ncol=2)
-fisher.test(FET.data)
-
-#MICROGLIA
-sca = FromMatrix(log2(as.matrix(Table.MX.cpm3.INT)+1),Ex.MetaData,fdata)
-
-Table.SH.cpm3.INT.SH=subset(assay(sca), select=grepl("SH_", colnames(assay(sca))))
-Table.PH.cpm3.INT.PH=subset(assay(sca), select=grepl("PH_", colnames(assay(sca))))
-
- 
-expressionPerGene.INT.SH=rowSums(Table.SH.cpm3.INT.SH)
-expressionPerGene.INT.PH=rowSums(Table.PH.cpm3.INT.PH)
-
-expressionPerGene.sort.INT.SH=sort(expressionPerGene.INT.SH, decreasing=T)
-expressionPerGene.sort.INT.PH=sort(expressionPerGene.INT.PH, decreasing=T)
-
-
-expressionPerGene.INT.names.SH=names(expressionPerGene.sort.INT.SH)[1:2002]
-expressionPerGene.INT.names.PH=names(expressionPerGene.sort.INT.PH)[1:2002]
-
-A=intersect(M30GeneList$V1,expressionPerGene.INT.names.SH)
-B=intersect(M30GeneList$V1,expressionPerGene.INT.names.PH)
-length(A)
-length(B)
-
-FET.data = matrix(c(99,219,100,218), ncol=2)
-fisher.test(FET.data)
-
-
-#ASTOCYTES
-sca = FromMatrix(log2(as.matrix(Table.MX.cpm3.INT)+1),Ex.MetaData,fdata)
-
-
-Table.SH.cpm3.INT.SH=subset(assay(sca), select=grepl("SH_", colnames(assay(sca))))
-Table.PH.cpm3.INT.PH=subset(assay(sca), select=grepl("PH_", colnames(assay(sca))))
-
- 
-expressionPerGene.INT.SH=rowSums(Table.SH.cpm3.INT.SH)
-expressionPerGene.INT.PH=rowSums(Table.PH.cpm3.INT.PH)
-
-expressionPerGene.sort.INT.SH=sort(expressionPerGene.INT.SH, decreasing=T)
-expressionPerGene.sort.INT.PH=sort(expressionPerGene.INT.PH, decreasing=T)
-
-
-expressionPerGene.INT.names.SH=names(expressionPerGene.sort.INT.SH)[1:2002]
-expressionPerGene.INT.names.PH=names(expressionPerGene.sort.INT.PH)[1:2002]
-
-A=intersect(M30GeneList$V1,expressionPerGene.INT.names.SH)
-B=intersect(M30GeneList$V1,expressionPerGene.INT.names.PH)
-length(A)
-length(B)
-
-FET.data = matrix(c(7,83,293,15133), ncol=2)
-fisher.test(FET.data)
-
-
-#differential expression
-avexpressionPerGene.INT.SH=rowSums(Table.SH.cpm3.INT.SH)/361
-avexpressionPerGene.INT.PH=rowSums(Table.PH.cpm3.INT.PH)/334
-
-
-
-
-
