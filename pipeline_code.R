@@ -49,16 +49,24 @@ abline(h=metadata(brRanks.2)$inflection, col="forestgreen", lty=2)
 legend("topright", lty=2, col=c("dodgerblue", "forestgreen"),legend=c("knee", "inflection"), cex=1, pt.cex=0.1)
 dev.off()
 
+knee.1=brRanks.1@metadata$knee
+inflection.1=brRanks.1@metadata$inflection
+paste(inflection.1, knee.1)
+
+knee.2=brRanks.2@metadata$knee
+inflection.2=brRanks.2@metadata$inflection
+paste(inflection.2, knee.2)
+
 #emptydrops to filter out non cells
 set.seed(1234)
-emptyDropsOutput.1= emptyDrops(dataMatrixDgC.1, lower=100,retain=500)
-emptyDropsOutput.2 = emptyDrops(dataMatrixDgC.2, lower=100, retain=300)
+emptyDropsOutput.1= emptyDrops(dataMatrixDgC.1, lower=inflection.1,retain=knee.1)
+emptyDropsOutput.2 = emptyDrops(dataMatrixDgC.2, lower=inflection.2, retain=knee.2)
 
-emptyDropsKeep.1 = emptyDropsOutput.1$FDR <= 0.05
+emptyDropsKeep.1 = emptyDropsOutput.1$FDR <= 0.01
 emptyDropsKeep.na.1 = emptyDropsKeep.1
 emptyDropsKeep.na.1[is.na(emptyDropsKeep.1)]= FALSE
 
-emptyDropsKeep.2 = emptyDropsOutput.2$FDR <= 0.05
+emptyDropsKeep.2 = emptyDropsOutput.2$FDR <= 0.01
 emptyDropsKeep.na.2 = emptyDropsKeep.2
 emptyDropsKeep.na.2[is.na(emptyDropsKeep.2)]= FALSE
 
@@ -107,8 +115,8 @@ countsMx.1=as.matrix(counts.1)
 countsMX.2=as.matrix(counts.2)
 
 #create seurat object
-SH.Sample= CreateSeuratObject(countsMx.1, min.cells=5, min.features=200, project = "Control")
-PH.Sample= CreateSeuratObject(countsMX.2, min.cells=5, min.features=200, project = "Epilepsy")
+SH.Sample= CreateSeuratObject(countsMx.1, min.cells=5, min.features=5, project = "Control")
+PH.Sample= CreateSeuratObject(countsMX.2, min.cells=5, min.features=5, project = "Epilepsy")
 
 #no of genes and cells per sample
 dim(SH.Sample)
@@ -138,22 +146,19 @@ PH.MTfilt = subset(PH.Sample, subset = MT.PER < 10)
 dim(SH.MTfilt)
 dim(PH.MTfilt)
 
-SH.MTfilt.data=GetAssayData(object = SH.MTfilt, assay = "RNA", slot = "counts")
-PH.MTfilt.data=GetAssayData(object = PH.MTfilt, assay = "RNA", slot = "counts")
+SH.MTfilt.counts=GetAssayData(object = SH.MTfilt, assay = "RNA", slot = "counts")
+PH.MTfilt.counts=GetAssayData(object = PH.MTfilt, assay = "RNA", slot = "counts")
 
-#is this needed
-#SH.filtSeuratOb= CreateSeuratObject(counts=as.matrix(SH.MTfilt.data), min.cells=5, min.features=5, project = "Control")
-#SH.filtSeuratOb[["MT.PER"]] = PercentageFeatureSet(SH.filtSeuratOb, pattern = "mt-")
-#dim(SH.filtSeuratOb)
-#PH.filtSeuratOb= CreateSeuratObject(counts=as.matrix(PH.MTfilt.data), min.cells=5, min.features=5, project = "
-#PH.filtSeuratOb[["MT.PER"]] = PercentageFeatureSet(PH.filtSeuratOb, pattern = "mt-")
-#dim(PH.filtSeuratOb)
+SH.filtSeuratOb= CreateSeuratObject(counts=as.matrix(SH.MTfilt.counts), min.cells=5, min.features=5, project = "Epilepsy")
+SH.filtSeuratOb[["MT.PER"]] = PercentageFeatureSet(SH.filtSeuratOb, pattern = "mt-")
+PH.filtSeuratOb= CreateSeuratObject(counts=as.matrix(PH.MTfilt.counts), min.cells=5, min.features=5, project = "Epilepsy")
+PH.filtSeuratOb[["MT.PER"]] = PercentageFeatureSet(PH.filtSeuratOb, pattern = "mt-")
 
-#SH.FilteredCountsMatrix=GetAssayData(object = SH.filtSeuratOb, assay = "RNA", slot = "data")
-#PH.FilteredCountsMatrix=GetAssayData(object = PH.filtSeuratOb, assay = "RNA", slot = "data")
+SH.FilteredCountsMatrix=GetAssayData(object = SH.filtSeuratOb, assay = "RNA", slot = "counts")
+PH.FilteredCountsMatrix=GetAssayData(object = PH.filtSeuratOb, assay = "RNA", slot = "counts")
 
-SH.MTfilt.data=GetAssayData(object = SH.MTfilt, assay = "RNA", slot = "data")
-PH.MTfilt.data=GetAssayData(object = PH.MTfilt, assay = "RNA", slot = "data")
+SH.MTfilt.data=GetAssayData(object = SH.filtSeuratOb, assay = "RNA", slot = "data")
+PH.MTfilt.data=GetAssayData(object = SH.filtSeuratOb, assay = "RNA", slot = "data")
 
 #histogram of expression before normalisation
 pdf("SH_hist_totalExpr.pdf")
@@ -202,14 +207,14 @@ pdf("PH_PCAplot.pdf")
 DimPlot(object = PH.filtNormScaledPCA, dim.1 = 1, dim.2 = 2)
 dev.off()
 
-SH.filtNormScaledPCA <- JackStraw(SH.filtNormScaledPCA, num.replicate = 200)
-SH.filtNormScaledPCA <- ScoreJackStraw(SH.filtNormScaledPCA, reduction = "pca", dims = 1:20)
+SH.filtNormScaledPCA = JackStraw(SH.filtNormScaledPCA, num.replicate = 200)
+SH.filtNormScaledPCA = ScoreJackStraw(SH.filtNormScaledPCA, reduction = "pca", dims = 1:20)
 pdf("SH_JackSrawPlot.pdf")
 JackStrawPlot(object = SH.filtNormScaledPCA, dims= 1:20)
 dev.off()
 
-PH.filtNormScaledPCA <- JackStraw(PH.filtNormScaledPCA, num.replicate = 200)
-PH.filtNormScaledPCA <- ScoreJackStraw(PH.filtNormScaledPCA, reduction = "pca", dims = 1:20)
+PH.filtNormScaledPCA = JackStraw(PH.filtNormScaledPCA, num.replicate = 200)
+PH.filtNormScaledPCA = ScoreJackStraw(PH.filtNormScaledPCA, reduction = "pca", dims = 1:20)
 pdf("PH_JackSrawPlot.pdf")
 JackStrawPlot(object = PH.filtNormScaledPCA, dims= 1:20)
 dev.off()
@@ -258,18 +263,18 @@ Prop.Homotypic.PH = modelHomotypic(annotations.PH)
 nExp_poi.PH = round(0.07*length(PH.filtNormScaledPCAclust@active.ident))
 nExp_poi.adj.PH = round(nExp_poi.PH*(1-Prop.Homotypic.PH))
 
-SH.filtNormScaledPCAclust = doubletFinder_v3(SH.filtNormScaledPCAclust, PCs = 1:20, pN = 0.25, pK = 0.02, nExp = nExp_poi.SH, reuse.pANN = FALSE,sct = FALSE)
-SH.filtNormScaledPCAclust = doubletFinder_v3(SH.filtNormScaledPCAclust, PCs = 1:20, pN = 0.25, pK = 0.02, nExp = nExp_poi.adj.SH, reuse.pANN = paste("pANN_0.25_0.02_",nExp_poi.SH,sep=""), sct = FALSE)
-PH.filtNormScaledPCAclust = doubletFinder_v3(PH.filtNormScaledPCAclust, PCs = 1:20, pN = 0.25, pK = 0.02, nExp = nExp_poi.PH, reuse.pANN = FALSE,sct = FALSE)
-PH.filtNormScaledPCAclust = doubletFinder_v3(PH.filtNormScaledPCAclust, PCs = 1:20, pN = 0.25, pK = 0.02, nExp = nExp_poi.adj.PH, reuse.pANN = paste("pANN_0.25_0.02_",nExp_poi.PH,sep=""), sct = FALSE)
+SH.filtNormScaledPCAclust = doubletFinder_v3(SH.filtNormScaledPCAclust, PCs = 1:20, pN = 0.25, pK = pK.SH, nExp = nExp_poi.SH, reuse.pANN = FALSE,sct = FALSE)
+SH.filtNormScaledPCAclust = doubletFinder_v3(SH.filtNormScaledPCAclust, PCs = 1:20, pN = 0.25, pK = pK.SH, nExp = nExp_poi.adj.SH, reuse.pANN = paste("pANN_",nExp_poi.SH,sep=""), sct = FALSE)
+PH.filtNormScaledPCAclust = doubletFinder_v3(PH.filtNormScaledPCAclust, PCs = 1:20, pN = 0.25, pK = pK.PH, nExp = nExp_poi.PH, reuse.pANN = FALSE,sct = FALSE)
+PH.filtNormScaledPCAclust = doubletFinder_v3(PH.filtNormScaledPCAclust, PCs = 1:20, pN = 0.25, pK = pK.PH, nExp = nExp_poi.adj.PH, reuse.pANN = paste("pANN_",nExp_poi.PH,sep=""), sct = FALSE)
 
-SH.filtNormScaledPCAclust@meta.data[,"DF_Class"] = get('SH.filtNormScaledPCAclust')@meta.data[[paste("DF.classifications_0.25_0.02_",nExp_poi.SH,sep="")]]
+SH.filtNormScaledPCAclust@meta.data[,"DF_Class"] = get('SH.filtNormScaledPCAclust')@meta.data[[paste("DF.classifications_",nExp_poi.SH,sep="")]]
 #this next line doesn't make sense - telling it: which values in DF_Class are 'Doublets' and of those which are singlets, classify as Doublet_LOW
 SH.filtNormScaledPCAclust@meta.data$DF_Class[which(SH.filtNormScaledPCAclust@meta.data$DF_Class == "Doublet" & get('SH.filtNormScaledPCAclust')@meta.data[[paste("DF.classifications_0.25_0.09_",nExp_poi.SH,sep="")]] == "Singlet")] = "Doublet_LOW"
 SH.filtNormScaledPCAclust@meta.data$DF_Class[which(SH.filtNormScaledPCAclust@meta.data$DF_Class == "Doublet")] = "Doublet_HIGH"
 SH.Doublets=as.character(colnames(SH.filtNormScaledPCAclust)[which(SH.filtNormScaledPCAclust@meta.data$DF_Class == "Doublet_HIGH")])
 
-PH.filtNormScaledPCAclust@meta.data[,"DF_Class"] = get('PH.filtNormScaledPCAclust')@meta.data[[paste("DF.classifications_0.25_0.02_",nExp_poi.PH,sep="")]]
+PH.filtNormScaledPCAclust@meta.data[,"DF_Class"] = get('PH.filtNormScaledPCAclust')@meta.data[[paste("DF.classifications_",nExp_poi.PH,sep="")]]
 PH.filtNormScaledPCAclust@meta.data$DF_Class[which(PH.filtNormScaledPCAclust@meta.data$DF_Class == "Doublet" & get('PH.filtNormScaledPCAclust')@meta.data[[paste("DF.classifications_0.25_0.09_",nExp_poi.PH,sep="")]] == "Singlet")] = "Doublet_LOW"
 PH.filtNormScaledPCAclust@meta.data$DF_Class[which(PH.filtNormScaledPCAclust@meta.data$DF_Class == "Doublet")] = "Doublet_HIGH"
 PH.Doublets=as.character(colnames(PH.filtNormScaledPCAclust)[which(PH.filtNormScaledPCAclust@meta.data$DF_Class == "Doublet_HIGH")])
